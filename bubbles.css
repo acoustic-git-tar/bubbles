@@ -1,0 +1,242 @@
+/* ============================================================
+   MESSAGES — circular bubbles
+   ------------------------------------------------------------
+   Discord rotates the hash on its CSS-module classes
+   (e.g. contents_c19a55 -> contents_2i8Bfm), which silently breaks
+   any selector pinned to a hash. Everything below matches on the
+   stable class *prefix* instead, so it survives Discord updates.
+   ============================================================ */
+
+:root {
+  --ddex-bubble-radius: 21px;   /* = half of a one-line bubble's height (22px line + 2*10px pad) -> perfect semicircle ends */
+  --ddex-bubble-tail: 5px;      /* small corner used for the "tail" / stacked edge */
+  --ddex-bubble-pad-y: 10px;
+  --ddex-bubble-pad-x: 16px;
+  --ddex-bubble-bg: rgba(255, 255, 255, 0.075);
+  /* ---- own-message colors (swap in a preset below) ---- */
+  --ddex-bubble-bg-self: #187a4f;
+  --ddex-text-self: #ffffff;
+  --ddex-link-self: #d3f9e6;      /* links inside your bubbles (underlined) */
+  --ddex-link-other: var(--text-link, #00a8fc);  /* links inside other people's bubbles */
+
+  /* PRESETS — replace the four --ddex-*-self lines above with one of these:
+
+     Blurple (default)  bg #5865f2   text #ffffff   link #ffffff
+     Rose               bg #c2255c   text #ffffff   link #ffe3ec
+     Emerald            bg #187a4f   text #ffffff   link #d3f9e6
+     Ocean              bg #0b6bcb   text #ffffff   link #f2f9ff
+     Violet             bg #6d3fc4   text #ffffff   link #ece3ff
+     Amber (dark text)  bg #f5b83d   text #1a1300   link #1a1300
+     Slate              bg #3a3f4b   text #f2f3f5   link #8ab4ff
+  */
+  --ddex-margin-left: var(--custom-message-margin-left-content-cozy, 72px);
+}
+
+/* ---- bubble (others) ---- */
+
+[class*="messageListItem_"] [class*="contents_"] > [class*="messageContent_"] {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-left: 0 !important;
+  padding: var(--ddex-bubble-pad-y) var(--ddex-bubble-pad-x) !important;
+  background-color: var(--ddex-bubble-bg);
+  word-wrap: normal;
+
+  /* TL TR BR BL — stacked message: soft flat-ish left edge */
+  border-radius:
+    var(--ddex-bubble-tail)
+    var(--ddex-bubble-radius)
+    var(--ddex-bubble-radius)
+    var(--ddex-bubble-tail);
+}
+
+/* first message of a group: full circle corners with a tail bottom-left */
+/* (direct children only, so forwarded/quoted content nested in the message is not bubbled) */
+[class*="messageListItem_"] [class*="groupStart_"] > [class*="contents_"] > [class*="messageContent_"] {
+  border-radius:
+    var(--ddex-bubble-radius)
+    var(--ddex-bubble-radius)
+    var(--ddex-bubble-radius)
+    var(--ddex-bubble-tail);
+}
+
+/* empty text body (forwards, attachment-only messages) -> no empty pill */
+[class*="messageListItem_"] [class*="messageContent_"]:empty {
+  display: none !important;
+}
+
+/* keep the message body aligned with the avatar gutter */
+[class*="messageListItem_"] [class^="message_"],
+[class*="messageListItem_"] [class*="contents_"] {
+  max-width: calc(100% - var(--ddex-margin-left)) !important;
+  min-width: calc(100% - var(--ddex-margin-left)) !important;
+}
+
+/* hover action bar */
+[class*="messageListItem_"] [class*="buttonContainer_"] [class*="buttons_"] {
+  right: 20px;
+}
+
+/* hide the "1" on single-count reactions */
+[class*="reactionInner_"][aria-label*=", 1 "] [class*="reactionCount_"] {
+  display: none !important;
+}
+
+/* ============================================================
+   OWN MESSAGES — right-aligned, brand-coloured
+   ============================================================ */
+
+[class*="messageListItem_"][data-is-self="true"] {
+  align-items: end;
+  align-content: end;
+  justify-content: end;
+  justify-items: end;
+}
+
+[data-is-self="true"] [class^="message_"] {
+  padding-right: var(--ddex-margin-left) !important;
+}
+
+[data-is-self="true"] [class*="contents_"] {
+  justify-items: end;
+  justify-self: end;
+}
+
+[data-is-self="true"] [class*="avatar_"] {
+  left: auto !important;
+  right: var(--custom-message-margin-horizontal, 16px);
+}
+
+[data-is-self="true"] [class*="avatarDecoration_"] {
+  left: auto !important;
+  right: calc(
+    var(--custom-message-margin-horizontal, 16px)
+    - var(--custom-message-avatar-decoration-size, 96px) / 2
+    + var(--custom-message-avatar-size, 40px) / 2
+  );
+}
+
+[data-is-self="true"] [class*="contents_"] > [class*="messageContent_"] {
+  background-color: var(--ddex-bubble-bg-self);
+  color: var(--ddex-text-self);
+  /* stacked: flat-ish right edge */
+  border-radius:
+    var(--ddex-bubble-radius)
+    var(--ddex-bubble-tail)
+    var(--ddex-bubble-tail)
+    var(--ddex-bubble-radius);
+}
+
+/* ---- links inside bubbles ---- */
+
+[class*="messageListItem_"] [class*="contents_"] > [class*="messageContent_"] a {
+  color: var(--ddex-link-other) !important;
+}
+
+[data-is-self="true"] [class*="contents_"] > [class*="messageContent_"] a {
+  color: var(--ddex-link-self) !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* first of a group: tail bottom-right */
+[data-is-self="true"][class*="messageListItem_"] [class*="groupStart_"] > [class*="contents_"] > [class*="messageContent_"] {
+  border-radius:
+    var(--ddex-bubble-radius)
+    var(--ddex-bubble-radius)
+    var(--ddex-bubble-tail)
+    var(--ddex-bubble-radius);
+}
+
+/* attachments / embeds: top-level accessories only.
+   The forwarded-message block contains its OWN message-accessories-* element
+   (same id prefix), and forcing end-alignment on that collapsed the image. */
+[data-is-self="true"] > [class^="message_"] > [id^="message-accessories-"] > * {
+  justify-self: end !important;
+  align-self: flex-end !important;
+}
+
+/* images / videos on own messages: shrink to content and sit on the right.
+   Discord puts an inline `margin: auto` on the image wrapper, which centers it
+   whenever the container is wider than the image, hence !important here. */
+[data-is-self="true"] > [class^="message_"] > [id^="message-accessories-"] > [class*="visualMediaItemContainer_"] {
+  width: auto;
+  max-width: 100%;
+}
+
+[data-is-self="true"] > [class^="message_"] > [id^="message-accessories-"] > [class*="visualMediaItemContainer_"] [class*="imageWrapper_"] {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+/* forwarded message block (has a quote bar + "Forwarded" header) */
+[id^="message-accessories-"] > [class*="container_"]:has(> [class*="quote_"]) {
+  max-width: calc(100% - var(--ddex-margin-left));
+  box-sizing: border-box;
+}
+
+[data-is-self="true"] [id^="message-accessories-"] > [class*="container_"]:has(> [class*="quote_"]) {
+  width: fit-content !important;
+  margin-left: auto !important;
+  align-self: flex-end;
+  justify-self: end;
+}
+
+/* never let the nested accessories inside a forward shrink or realign */
+[class*="quote_"] ~ [class*="content_"] [id^="message-accessories-"],
+[class*="content_"] > [id^="message-accessories-"] {
+  align-self: auto !important;
+  justify-self: auto !important;
+  width: auto;
+}
+
+[data-is-self="true"] [class*="buttonContainer_"] {
+  right: auto;
+  left: 0;
+}
+
+[data-is-self="true"] [class*="buttonContainer_"] [class*="buttons_"] {
+  right: auto;
+  left: 56px;
+}
+
+[data-is-self="true"] [class*="reactions_"] {
+  align-content: flex-end;
+  justify-content: flex-end;
+}
+
+/* ---- replies on own messages ---- */
+
+[data-is-self="true"] [class^="message_"][class*="hasReply_"] {
+  padding-top: 22px;
+}
+
+[data-is-self="true"] [class*="repliedMessage_"] {
+  position: absolute;
+  flex-direction: row-reverse;
+  top: 0;
+  left: auto !important;
+  right: calc(
+    var(--custom-message-margin-horizontal, 16px)
+    - var(--custom-message-avatar-decoration-size, 96px) / 2
+    + var(--custom-message-avatar-size, 40px) / 2
+  );
+  margin-right: calc(var(--chat-avatar-size, 40px) * 1.5 + 12px);
+  max-width: calc(
+    100% - var(--custom-guild-sidebar-width, 0px)
+    - var(--custom-guild-list-width, 0px) + 32px
+  );
+}
+
+[data-is-self="true"] [class*="repliedMessageClickableSpine_"] {
+  right: calc(var(--chat-avatar-size, 40px) / 2 * -1 + var(--gutter, 16px) * -1 - 4px);
+  left: 100%;
+  border-right: var(--spine-width, 2px) solid var(--spine-default);
+  border-bottom: 0 solid var(--spine-default);
+  border-left: 0 solid var(--spine-default);
+  border-top: var(--spine-width, 2px) solid var(--spine-default);
+  border-top-right-radius: 6px;
+  border-top-left-radius: 0;
+}
